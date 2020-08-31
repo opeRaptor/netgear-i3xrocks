@@ -1,0 +1,73 @@
+#!/bin/bash
+#LABEL_ICON=${icon_mute:-$(xrescat i3xrocks.label.mute M)}
+LABEL_COLOR=${label_color:-$(xrescat i3xrocks.label.color "#7B8394")}
+VALUE_COLOR=${color:-$(xrescat i3xrocks.value.color "#D8DEE9")}
+VALUE_FONT=${font:-$(xrescat i3xrocks.value.font "Source Code Pro Medium 13")}
+VALUE_WEATHER_ERROR_MESSAGE=${error_message:-$(xrescat i3xrocks.weather.error_message "")}
+
+LABEL_COLOR=${label_color:-$(xrescat i3xrocks.label.color "#7B8394")}
+VALUE_FONT=${font:-$(xrescat i3xrocks.value.font "Source Code Pro Medium 13")}
+
+BATT_PERCENT=$(curl -s -L "http://10.0.0.1/api/model.json" | jq '.power.battChargeLevel' | tr -d '"' || echo "${VALUE_WEATHER_ERROR_MESSAGE}")
+
+if [ -z "$BATT_PERCENT" ]; then
+    exit 0
+elif [ "$BATT_PERCENT" -ge 0 ] && [ "$BATT_PERCENT" -le 20 ]; then
+    LABEL_ICON=$(xrescat i3xrocks.label.battery0 E)
+    #VALUE_COLOR=$(xrescat i3xrocks.critical.color red)
+elif [ "$BATT_PERCENT" -ge 20 ] && [ "$BATT_PERCENT" -le 50 ]; then
+    LABEL_ICON=$(xrescat i3xrocks.label.battery20 L)
+    #VALUE_COLOR=$(xrescat i3xrocks.error.color orange)
+elif [ "$BATT_PERCENT" -ge 50 ] && [ "$BATT_PERCENT" -le 80 ]; then
+    LABEL_ICON=$(xrescat i3xrocks.label.battery50 M)
+    #VALUE_COLOR=$(xrescat i3xrocks.nominal white)
+elif [ "$BATT_PERCENT" -ge 80 ] && [ "$BATT_PERCENT" -le 98 ]; then
+    LABEL_ICON=$(xrescat i3xrocks.label.battery80 F)
+    #VALUE_COLOR=$(xrescat i3xrocks.label.color white)
+else
+    LABEL_ICON=$(xrescat i3xrocks.label.battery100 C)
+    #VALUE_COLOR=$(xrescat i3xrocks.label.color white)
+fi
+
+# | tr -d '"' to remove double quotes
+CONNECTION_TEXT=$(curl -s -L "http://10.0.0.1/api/model.json" | jq '.wwan.connectionText' | tr -d '"' || echo "${VALUE_WEATHER_ERROR_MESSAGE}")
+
+
+BARS=$(curl -s -L "http://10.0.0.1/api/model.json" | jq '.wwan.signalStrength.bars' || echo "${VALUE_WEATHER_ERROR_MESSAGE}")
+
+#echo ${BARS}
+
+if [ ${BARS} = "0" ]; then
+    BARGRATH='[.....]'
+elif [ ${BARS} = "1" ]; then
+    BARGRATH='[|....]'
+elif [ ${BARS} = "2" ]; then
+    BARGRATH='[||...]'
+elif [ ${BARS} = "3" ]; then
+    BARGRATH='[|||..]'
+elif [ ${BARS} = "4" ]; then
+    BARGRATH='[||||.]'
+elif [ ${BARS} = "5" ]; then
+    BARGRATH='[|||||]'
+else
+  echo "${VALUE_WEATHER_ERROR_MESSAGE}"
+fi
+
+echo "<span color=\"${LABEL_COLOR}\">$LABEL_ICON</span><span font_desc=\"${VALUE_FONT}\" color=\"${VALUE_COLOR}\"> ${CONNECTION_TEXT} ${BARGRATH}</span>"
+
+if [ ! -z "$button" ]; then
+    /usr/bin/i3-msg -q exec xdg-open http://10.0.0.1/index.html
+fi
+
+# curl -s "http://192.168.1.1/api/model.json" | jq '.wwan.signalStrength.bars'
+#curl -s -L "http://192.168.1.1/api/model.json" | jq '.wwan.signalStrength.bars'
+
+
+#scripts/netgear /usr/share/i3xrocks
+
+#conf.d/50_netgear /etc/regolith/i3xrocks/conf.d
+# netgear
+#
+# shows connection status of Netgear Nighthawk M1
+#[netgear]
+#interval=10

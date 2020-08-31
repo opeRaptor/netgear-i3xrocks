@@ -1,0 +1,5 @@
+# netgear
+#
+# shows connection status of Netgear Nighthawk M1
+[netgear]
+interval=5
